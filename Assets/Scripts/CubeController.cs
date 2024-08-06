@@ -1,24 +1,75 @@
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using System;
+
+
+//public class GameManager : MonoBehaviour { }
+
+
 
 public class CubeController : MonoBehaviour
 {
     [SerializeField] private Transform Referance;
     [SerializeField] private MeshRenderer ReferanceMesh;
-    [SerializeField] private Transform Falling;
-    [SerializeField] private Transform Stand;
+    [SerializeField] private GameObject StandPrefab;
+    [SerializeField] private GameObject FallingPrefab;
+
+    [SerializeField] private Transform last;
+
 
     [SerializeField] private bool TestIsHorizantal;
     [SerializeField] private float TestValue;
 
+    [SerializeField] private float speed;
+    [SerializeField] private float Limit;
+
+    private bool isaxixX;
+    private bool isForward;
+    private bool isStop;
     [ContextMenu(itemName: "TEST")]
     private void TEST()
     {
         DivedObj(TestIsHorizantal, TestValue);
     }
 
+
+
+
+    private void Update()
+    {
+        if (isStop) { return; }
+        var position = transform.position;
+        var directoin = isForward ? 1 : -1;
+        var move = speed * Time.deltaTime * directoin;
+
+        if (isaxixX)
+        {
+            position.x += move;
+            if (position.x < -Limit || position.x > Limit)
+            {
+                position.x = Mathf.Clamp(position.x, -Limit, Limit);
+                isForward = !isForward;
+            }
+        }
+        else
+        {
+            position.z += move;
+            if (position.z < -Limit || position.z > Limit)
+            {
+                position.z = Mathf.Clamp(position.z, -Limit, Limit);
+                isForward = !isForward;
+            }
+        }
+
+        transform.position = position;
+    }
+
     private void DivedObj(bool isAxisX, float value)
     {
+
+        var Falling = Instantiate(FallingPrefab).transform;
+        var Stand = Instantiate(StandPrefab).transform;
         bool isFirstFalling = value > 0;
 
         // Size
@@ -60,6 +111,8 @@ public class CubeController : MonoBehaviour
 
         Falling.position = fallingPosition;
         Stand.position = standPosition;
+
+        last = Stand;
     }
 
     private Vector3 GetPositionEdge(MeshRenderer mesh, Direction direction)
@@ -92,4 +145,30 @@ public class CubeController : MonoBehaviour
         Front,
         Back
     }
+
+    public void Onclick()
+    {
+        isStop = true;
+
+        var distance = last.position - transform.position;
+
+        DivedObj(isaxixX, isaxixX ? distance.x : distance.z);
+
+
+
+
+        //Reset
+        isaxixX = !isaxixX;
+        var newpositon = last.position;
+        newpositon.y += transform.localScale.y;
+
+        if (!isaxixX) newpositon.z = Limit;
+        else newpositon.x = Limit;
+
+        transform.position = newpositon;
+
+        transform.localScale = last.localScale;
+        isStop = false;
+    }
+
 }
