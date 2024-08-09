@@ -1,12 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-
-
-//public class GameManager : MonoBehaviour { }
-
-
+using TMPro; // TextMeshPro için gerekli
 
 public class CubeController : MonoBehaviour
 {
@@ -17,24 +12,26 @@ public class CubeController : MonoBehaviour
 
     [SerializeField] private Transform last;
 
-
     [SerializeField] private bool TestIsHorizantal;
     [SerializeField] private float TestValue;
 
     [SerializeField] private float speed;
     [SerializeField] private float Limit;
 
+    [SerializeField] private TextMeshProUGUI scoreText; // Sayaç için TextMeshProUGUI bileþeni
+    [SerializeField] private TextMeshProUGUI gameOverText; // Game Over için TextMeshProUGUI bileþeni
+
     private bool isaxixX;
     private bool isForward;
     private bool isStop;
+
+    private int score = 0; // Sayaç deðeri
+
     [ContextMenu(itemName: "TEST")]
     private void TEST()
     {
         DivedObj(TestIsHorizantal, TestValue);
     }
-
-
-
 
     private void Update()
     {
@@ -63,11 +60,16 @@ public class CubeController : MonoBehaviour
         }
 
         transform.position = position;
+
+        // Game Over kontrolü
+        if (transform.localScale.x <= 0 || transform.localScale.z <= 0)
+        {
+            GameOver();
+        }
     }
 
     private void DivedObj(bool isAxisX, float value)
     {
-
         var Falling = Instantiate(FallingPrefab).transform;
         var Stand = Instantiate(StandPrefab).transform;
         bool isFirstFalling = value > 0;
@@ -75,17 +77,17 @@ public class CubeController : MonoBehaviour
         // Size
         var fallingsize = Referance.localScale;
         if (isAxisX)
-            fallingsize.x = Math.Abs(value);
+            fallingsize.x = Mathf.Abs(value);
         else
-            fallingsize.z = Math.Abs(value);
+            fallingsize.z = Mathf.Abs(value);
 
         Falling.localScale = fallingsize;
 
         var standSize = Referance.localScale;
         if (isAxisX)
-            standSize.x = Referance.localScale.x - Math.Abs(value);
+            standSize.x = Referance.localScale.x - Mathf.Abs(value);
         else
-            standSize.z = Referance.localScale.z - Math.Abs(value);
+            standSize.z = Referance.localScale.z - Mathf.Abs(value);
         Stand.localScale = standSize;
 
         var MinDirection = isAxisX ? Direction.Left : Direction.Back;
@@ -146,18 +148,17 @@ public class CubeController : MonoBehaviour
         Back
     }
 
-    public void Onclick()
+    public void OnClick()
     {
+        if (gameOverText.gameObject.activeSelf) return; // Game Over durumunda týklamayý engelle
+
         isStop = true;
 
         var distance = last.position - transform.position;
 
         DivedObj(isaxixX, isaxixX ? distance.x : distance.z);
 
-
-
-
-        //Reset
+        // Reset
         isaxixX = !isaxixX;
         var newpositon = last.position;
         newpositon.y += transform.localScale.y;
@@ -169,6 +170,23 @@ public class CubeController : MonoBehaviour
 
         transform.localScale = last.localScale;
         isStop = false;
+
+        // Sayaç iþlemleri
+        score++;
+        UpdateScoreText();
     }
 
+    private void UpdateScoreText()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = score.ToString();
+        }
+    }
+
+    private void GameOver()
+    {
+        isStop = true;
+        gameOverText.gameObject.SetActive(true);
+    }
 }
